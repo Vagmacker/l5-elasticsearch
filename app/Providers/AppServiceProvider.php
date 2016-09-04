@@ -15,6 +15,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        /*$client = app(Client::class);
+        $index = ['index' => env('ES_INDEX')];
+
+        if (!$client->indices()->exists($index)) {
+            $client->indices()->create($index);
+        }*/
 
     }
 

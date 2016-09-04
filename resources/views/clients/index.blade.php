@@ -11,7 +11,8 @@
             <thead>
             <tr>
                 <th>ID</th>
-                <th>nome</th>
+                <th>Nome</th>
+                <th>CPF</th>
                 <th>Ação</th>
             </tr>
             </thead>
@@ -21,6 +22,10 @@
                     <td></td>
                     <td></td>
                     <td></td>
+                    <td>
+                        <a href="{{route('clients.edit', ['id'=>1])}}" class="btn btn-sm btn-primary">Editar</a>
+                        <a href="{{route('clients.destroy', ['id'=>1])}}" class="btn btn-sm btn-danger">Excluir</a>
+                    </td>
                 </tr>
             @endforeach
             </tbody>
