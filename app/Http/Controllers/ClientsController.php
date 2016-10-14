@@ -2,21 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use Elasticsearch\Client;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClientsController extends Controller
 {
+
+    protected $elasticParams = [];
+    /**
+     * @var Client
+     */
+    private $client;
+
+    public function __construct(Client $client)
+    {
+
+        $this->client = $client;
+        $this->elasticParams['index'] = env('ES_INDEX');
+        $this->elasticParams['type'] = 'clients';
+    }
+
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        $name = $request->get('name');
+        if ($name) {
+            $this->elasticParams['body'] = [
+                'query' => [
+                    'match' => [
+                        'name' => $name
+                    ]
+                ]
+            ];
 
-        return view('clients.index');
+            $this->elasticParams['size'] = 500;
+        }
+
+        $clients = $this->client->search($this->elasticParams);
+        //dd($clients);
+        return view('clients.index', compact('clients'));
     }
 
     /**
@@ -26,7 +58,7 @@ class ClientsController extends Controller
      */
     public function create()
     {
-        //
+        return view('clients.create');
     }
 
     /**
@@ -37,7 +69,12 @@ class ClientsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->all();
+        unset($data['_token']);
+        $this->elasticParams['body'] = $data;
+        $this->elasticParams['refresh'] = true;
+        $this->client->create($this->elasticParams);
+        return redirect()->route('clients.index');
     }
 
     /**
@@ -59,7 +96,15 @@ class ClientsController extends Controller
      */
     public function edit($id)
     {
-        //
+        try{
+
+            $this->elasticParams['id'] = $id;
+            $client = $this->client->get($this->elasticParams);
+
+        } catch (Missing404Exception $exception) {
+            throw new NotFoundHttpException("Client not found");
+        }
+        return view('clients.edit', compact('client'));
     }
 
     /**
@@ -71,7 +116,21 @@ class ClientsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->elasticParams['id'] = $id;
+
+        if(!$this->client->exists($this->elasticParams)){
+            throw new NotFoundHttpException("Client not found");
+        }
+
+        $data = $request->all();
+        unset($data['_token']);
+        unset($data['_method']);
+
+        $this->elasticParams['refresh'] = true;
+        $this->elasticParams['body']['doc'] = $data;
+
+        $this->client->update($this->elasticParams);
+        return redirect()->route('clients.index');
     }
 
     /**
@@ -82,6 +141,15 @@ class ClientsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $this->elasticParams['id'] = $id;
+
+        if(!$this->client->exists($this->elasticParams)){
+            throw new NotFoundHttpException("Client not found");
+        }
+
+        $this->elasticParams['refresh'] = true;
+
+        $this->client->delete($this->elasticParams);
+        return redirect()->route('clients.index');
     }
 }

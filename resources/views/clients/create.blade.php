@@ -6,8 +6,7 @@
         <h3>Novo cliente</h3>
 
         {!! Form::open(['route' => 'clients.store', 'class'=>'form']) !!}
-        {{ csrf_field()  }}
-
+        {{ method_field("POST") }}
         <div class="form-group">
             {!! Form::label('name', 'Nome:') !!}
             {!! Form::text('name', null, ['class'=>'form-control']) !!}
